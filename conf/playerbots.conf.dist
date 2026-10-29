@@ -190,6 +190,12 @@ AiPlayerbot.InviteChat = 0
 # Bots will be automatically summoned to the player when they accept a group invitation
 AiPlayerbot.SummonWhenGroup = 1
 
+# When 0 (default), altbots (BotAutologin accounts) do NOT auto-join the master's group on login.
+# They stay where they logged out; invite them manually when you want them with you.
+# Set to 1 to restore the previous behavior (altbots auto-join on login, same as before).
+# Has no effect on random bots.
+AiPlayerbot.AltBotAutologinGroup = 0
+
 # Player can be activated as a bot (selfbot)
 # Selfbot permission level (0 = disabled, 1 = GM only (default), 2 = all players, 3 = activate on login)
 AiPlayerbot.SelfBotLevel = 1

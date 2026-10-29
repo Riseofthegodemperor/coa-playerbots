@@ -577,36 +577,42 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     botAI->TellMasterGreeting(PlayerbotTextMgr::instance().GetBotTextOrDefault(
         "hello", "Hello!", {}), PLAYERBOT_SECURITY_TALK);
 
-    // Queue group operations for world thread
-    if (master && master->GetGroup() && !group)
+    // Queue group operations for world thread.
+    // Skip for altbots when AiPlayerbot.AltBotAutologinGroup = 0 (default): they log in where they logged out
+    // and only join the master's group when the player invites them manually.
+    bool const skipGroupJoin = !sRandomPlayerbotMgr.IsRandomBot(bot) && !sPlayerbotAIConfig.altBotAutologinGroup;
+    if (!skipGroupJoin)
     {
-        Group* mgroup = master->GetGroup();
-        if (mgroup->GetMembersCount() >= 5)
+        if (master && master->GetGroup() && !group)
         {
-            // A 5-member party is full, so only a raid can take a 6th member. GroupInviteOperation::
-            // Execute() self-converts a non-raid group with >= 5 members to a raid before adding, so a
-            // separate ConvertToRaid is unnecessary here. Queue the invite for a raid OR a plain
-            // (non-LFG/BG/battlefield) party; we deliberately skip LFG/BG/BFG groups so a bot login
-            // never force-converts a live dungeon-finder or battleground group into a raid.
-            if (mgroup->isRaidGroup() || (!mgroup->isLFGGroup() && !mgroup->isBGGroup() && !mgroup->isBFGroup()))
+            Group* mgroup = master->GetGroup();
+            if (mgroup->GetMembersCount() >= 5)
             {
-                // Queue AddMember operation; Execute() converts the party to a raid before adding.
+                // A 5-member party is full, so only a raid can take a 6th member. GroupInviteOperation::
+                // Execute() self-converts a non-raid group with >= 5 members to a raid before adding, so a
+                // separate ConvertToRaid is unnecessary here. Queue the invite for a raid OR a plain
+                // (non-LFG/BG/battlefield) party; we deliberately skip LFG/BG/BFG groups so a bot login
+                // never force-converts a live dungeon-finder or battleground group into a raid.
+                if (mgroup->isRaidGroup() || (!mgroup->isLFGGroup() && !mgroup->isBGGroup() && !mgroup->isBFGroup()))
+                {
+                    // Queue AddMember operation; Execute() converts the party to a raid before adding.
+                    auto addOp = std::make_unique<GroupInviteOperation>(master->GetGUID(), bot->GetGUID());
+                    PlayerbotWorldThreadProcessor::instance().QueueOperation(std::move(addOp));
+                }
+            }
+            else
+            {
+                // Queue AddMember operation
                 auto addOp = std::make_unique<GroupInviteOperation>(master->GetGUID(), bot->GetGUID());
                 PlayerbotWorldThreadProcessor::instance().QueueOperation(std::move(addOp));
             }
         }
-        else
+        else if (master && !group)
         {
-            // Queue AddMember operation
-            auto addOp = std::make_unique<GroupInviteOperation>(master->GetGUID(), bot->GetGUID());
-            PlayerbotWorldThreadProcessor::instance().QueueOperation(std::move(addOp));
+            // Queue group creation and AddMember operation
+            auto inviteOp = std::make_unique<GroupInviteOperation>(master->GetGUID(), bot->GetGUID());
+            PlayerbotWorldThreadProcessor::instance().QueueOperation(std::move(inviteOp));
         }
-    }
-    else if (master && !group)
-    {
-        // Queue group creation and AddMember operation
-        auto inviteOp = std::make_unique<GroupInviteOperation>(master->GetGUID(), bot->GetGUID());
-        PlayerbotWorldThreadProcessor::instance().QueueOperation(std::move(inviteOp));
     }
     // if (master)
     // {

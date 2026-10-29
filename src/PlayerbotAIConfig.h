@@ -356,6 +356,7 @@ public:
     std::string commandServerBind;
     bool perfMonEnabled;
     bool summonWhenGroup;
+    bool altBotAutologinGroup;
     ShowHideCosmetic randomBotShowHelmet;
     ShowHideCosmetic randomBotShowCloak;
     bool randomBotFixedLevel;
