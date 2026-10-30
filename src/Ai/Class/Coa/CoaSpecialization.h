@@ -115,6 +115,11 @@ uint8 GetCoaPrimaryStats(Player const* player);
 // player picks one in the client. Returns true when a specialization was just chosen.
 bool EnsureCoaSpecialization(Player* bot);
 
+// Forces `bot` to a specialization of `role` drawn at random from its class's pool.
+// Records the choice as a manual spec so EnsureCoaSpecialization will not overwrite it.
+// Returns true when a specialization of the right role was successfully applied.
+bool AssignCoaRole(Player* bot, CoaRole role);
+
 // Spends a random bot's Character Advancement points the way a player of its specialization
 // would: one ability essence at every even level from 10 (class tree), one talent essence at every
 // odd level from 11 (specialization tree), in the order of the ascensionsidekick.com level build.

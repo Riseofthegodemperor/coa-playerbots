@@ -379,6 +379,26 @@ bool EnsureCoaSpecialization(Player* bot)
     return true;
 }
 
+bool AssignCoaRole(Player* bot, CoaRole role)
+{
+    if (!bot || !IsAscensionCustomClassId(bot->getClass()))
+        return false;
+
+    std::array<std::vector<uint32>, 3> const byRole = SpecializationsByRole(bot->getClass());
+    std::vector<uint32> const& candidates = byRole[uint8(role)];
+    if (candidates.empty())
+        return false;
+
+    uint32 const specializationId = candidates[urand(0, candidates.size() - 1)];
+    if (!SwitchAscensionSpecialization(bot, specializationId))
+        return false;
+
+    if (sRandomPlayerbotMgr.IsRandomBot(bot))
+        sRandomPlayerbotMgr.SetValue(bot, "coa_manual_spec", specializationId);
+
+    return true;
+}
+
 uint32 ApplyCoaTalents(Player* bot)
 {
     if (!bot || !IsAscensionCustomClassId(bot->getClass()) || bot->GetLevel() < SpecializationLevel ||

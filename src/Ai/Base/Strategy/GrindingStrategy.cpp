@@ -9,10 +9,7 @@
 
 std::vector<NextAction> GrindingStrategy::getDefaultActions()
 {
-    return {
-        NextAction("drink", 4.2f),
-        NextAction("food", 4.1f),
-    };
+    return {};
 }
 
 void GrindingStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
