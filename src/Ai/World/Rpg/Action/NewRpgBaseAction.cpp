@@ -895,6 +895,15 @@ bool NewRpgBaseAction::GetQuestPOIPosAndObjectiveIdx(uint32 questId, std::vector
             if (dz == INVALID_HEIGHT || dz == VMAP_INVALID_HEIGHT_VALUE)
                 continue;
 
+            // z < -200 means the MAX_HEIGHT search missed the terrain (e.g. Valley of Trials POI at z=-500);
+            // retry from just above the bot's own elevation before giving up.
+            if (dz < -200.0f)
+            {
+                dz = bot->GetMap()->GetHeight(dx, dy, bot->GetPositionZ() + 100.0f);
+                if (dz < -200.0f)
+                    continue;
+            }
+
             if (bot->GetZoneId() != bot->GetMap()->GetZoneId(bot->GetPhaseMask(), dx, dy, dz))
                 continue;
 

@@ -551,20 +551,33 @@ bool NewRpgDoQuestAction::DoIncompleteQuest(NewRpgInfo::DoQuest& data)
         if (dz == INVALID_HEIGHT || dz == VMAP_INVALID_HEIGHT_VALUE)
             return false;
 
+        // MAX_HEIGHT search can miss terrain for some POI coords (e.g. Valley of Trials returns z=-500);
+        // retry from near the bot's own elevation as a fallback.
+        if (dz < -200.0f)
+        {
+            dz = bot->GetMap()->GetHeight(dx, dy, bot->GetPositionZ() + 100.0f);
+            if (dz < -200.0f)
+                return false;
+        }
+
         WorldPosition pos(bot->GetMapId(), dx, dy, dz);
         data.lastReachPOI = 0;
         data.pos = pos;
         data.objectiveIdx = objectiveIdx;
     }
 
-    if (bot->GetDistance(data.pos) > 10.0f && !data.lastReachPOI)
     {
-        if (MoveFarTo(data.pos))
-            return true;
-        // Long-range sampler couldn't land a candidate — nudge the
-        // bot a short distance so the next tick retries from a
-        // different position instead of sitting idle.
-        return MoveRandomNear(10.0f);
+        float dist2d = bot->GetDistance2d(data.pos.GetPositionX(), data.pos.GetPositionY());
+        float dz = std::fabs(bot->GetPositionZ() - data.pos.GetPositionZ());
+        if ((dist2d > 10.0f || dz > 20.0f) && !data.lastReachPOI)
+        {
+            if (MoveFarTo(data.pos))
+                return true;
+            // Long-range sampler couldn't land a candidate — nudge the
+            // bot a short distance so the next tick retries from a
+            // different position instead of sitting idle.
+            return MoveRandomNear(10.0f);
+        }
     }
     // Now we are near the quest objective
     // kill mobs and looting quest should be done automatically by grind strategy
@@ -645,6 +658,13 @@ bool NewRpgDoQuestAction::DoCompletedQuest(NewRpgInfo::DoQuest& data)
         if (dz == INVALID_HEIGHT || dz == VMAP_INVALID_HEIGHT_VALUE)
             return false;
 
+        if (dz < -200.0f)
+        {
+            dz = bot->GetMap()->GetHeight(dx, dy, bot->GetPositionZ() + 100.0f);
+            if (dz < -200.0f)
+                return false;
+        }
+
         WorldPosition pos(bot->GetMapId(), dx, dy, dz);
         data.lastReachPOI = 0;
         data.pos = pos;
@@ -654,11 +674,15 @@ bool NewRpgDoQuestAction::DoCompletedQuest(NewRpgInfo::DoQuest& data)
     if (data.pos == WorldPosition())
         return false;
 
-    if (bot->GetDistance(data.pos) > 10.0f && !data.lastReachPOI)
     {
-        if (MoveFarTo(data.pos))
-            return true;
-        return MoveRandomNear(10.0f);
+        float dist2d = bot->GetDistance2d(data.pos.GetPositionX(), data.pos.GetPositionY());
+        float dz = std::fabs(bot->GetPositionZ() - data.pos.GetPositionZ());
+        if ((dist2d > 10.0f || dz > 20.0f) && !data.lastReachPOI)
+        {
+            if (MoveFarTo(data.pos))
+                return true;
+            return MoveRandomNear(10.0f);
+        }
     }
 
     // Now we are near the qoi of reward
